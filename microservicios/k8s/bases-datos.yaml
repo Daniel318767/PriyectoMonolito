@@ -1,0 +1,248 @@
+# ==================== USUARIOS DB ====================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: usuarios-init
+  namespace: microservicios
+data:
+  init.sql: |
+    CREATE TABLE usuarios (
+        id SERIAL PRIMARY KEY,
+        nombre VARCHAR(100) NOT NULL,
+        email VARCHAR(150) UNIQUE NOT NULL
+    );
+    INSERT INTO usuarios (nombre, email) VALUES
+    ('Ana Torres', 'ana@correo.com'),
+    ('Luis Pérez', 'luis@correo.com'),
+    ('Carlos Mendoza', 'carlos@correo.com');
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: usuarios-data
+  namespace: microservicios
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: usuarios-db
+  namespace: microservicios
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: usuarios-db
+  template:
+    metadata:
+      labels:
+        app: usuarios-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          env:
+            - name: POSTGRES_DB
+              value: usuarios_db
+            - name: POSTGRES_USER
+              value: usuarios_user
+            - name: POSTGRES_PASSWORD
+              value: usuarios123
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: init-sql
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: usuarios-data
+        - name: init-sql
+          configMap:
+            name: usuarios-init
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: usuarios-db
+  namespace: microservicios
+spec:
+  selector:
+    app: usuarios-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+
+# ==================== PRODUCTOS DB ====================
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: productos-init
+  namespace: microservicios
+data:
+  init.sql: |
+    CREATE TABLE productos (
+        id SERIAL PRIMARY KEY,
+        nombre VARCHAR(100) NOT NULL,
+        precio DECIMAL(10,2) NOT NULL
+    );
+    INSERT INTO productos (nombre, precio) VALUES
+    ('Laptop', 2500.00),
+    ('Teclado', 120.00),
+    ('Mouse', 80.00);
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: productos-data
+  namespace: microservicios
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: productos-db
+  namespace: microservicios
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: productos-db
+  template:
+    metadata:
+      labels:
+        app: productos-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          env:
+            - name: POSTGRES_DB
+              value: productos_db
+            - name: POSTGRES_USER
+              value: productos_user
+            - name: POSTGRES_PASSWORD
+              value: productos123
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: init-sql
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: productos-data
+        - name: init-sql
+          configMap:
+            name: productos-init
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: productos-db
+  namespace: microservicios
+spec:
+  selector:
+    app: productos-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+
+# ==================== PEDIDOS DB ====================
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pedidos-init
+  namespace: microservicios
+data:
+  init.sql: |
+    CREATE TABLE pedidos (
+        id SERIAL PRIMARY KEY,
+        usuario_id INTEGER NOT NULL,
+        producto_id INTEGER NOT NULL,
+        cantidad INTEGER NOT NULL
+    );
+    INSERT INTO pedidos (usuario_id, producto_id, cantidad) VALUES
+    (1, 1, 1),
+    (2, 2, 2),
+    (3, 3, 1);
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pedidos-data
+  namespace: microservicios
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pedidos-db
+  namespace: microservicios
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pedidos-db
+  template:
+    metadata:
+      labels:
+        app: pedidos-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          env:
+            - name: POSTGRES_DB
+              value: pedidos_db
+            - name: POSTGRES_USER
+              value: pedidos_user
+            - name: POSTGRES_PASSWORD
+              value: pedidos123
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: init-sql
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: pedidos-data
+        - name: init-sql
+          configMap:
+            name: pedidos-init
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pedidos-db
+  namespace: microservicios
+spec:
+  selector:
+    app: pedidos-db
+  ports:
+    - port: 5432
+      targetPort: 5432
