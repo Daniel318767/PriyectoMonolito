@@ -1,0 +1,34 @@
+services:
+  app:
+    build: .
+    container_name: monolito-app
+    ports:
+      - "3000:3000"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: proyecto_app
+      DB_USER: app_user
+      DB_PASSWORD: app123
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16
+    container_name: monolito-db
+    environment:
+      POSTGRES_DB: proyecto_app
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app_user -d proyecto_app"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
