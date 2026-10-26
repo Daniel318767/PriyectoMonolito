@@ -37,7 +37,7 @@ app.get('/usuarios', async (req, res) => {
 
 app.get('/productos', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM product');
+    const result = await pool.query('SELECT * FROM productos');
     res.json(result.rows);
   } catch (error) {
     console.error(error);
