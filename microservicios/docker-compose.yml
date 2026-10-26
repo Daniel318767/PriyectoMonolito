@@ -75,6 +75,8 @@ services:
       DB_NAME: pedidos_db
       DB_USER: pedidos_user
       DB_PASSWORD: pedidos123
+      USUARIOS_URL: http://usuarios:3001
+      PRODUCTOS_URL: http://productos:3002
     depends_on:
       pedidos-db:
         condition: service_healthy
