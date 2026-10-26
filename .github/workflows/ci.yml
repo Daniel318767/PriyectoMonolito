@@ -1,0 +1,76 @@
+name: CI - Monolito y Microservicios
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  monolito:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Construir e iniciar monolito
+        run: docker compose up -d --build
+        working-directory: monolito
+
+      - name: Ejecutar pruebas del monolito
+        run: docker compose exec -T app npm test
+        working-directory: monolito
+
+      - name: Mostrar logs si falla
+        if: failure()
+        run: docker compose logs
+        working-directory: monolito
+
+      - name: Detener contenedores
+        if: always()
+        run: docker compose down -v
+        working-directory: monolito
+
+  microservicios:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Construir e iniciar microservicios
+        run: docker compose up -d --build
+        working-directory: microservicios
+
+      - name: Esperar a que las APIs respondan
+        run: |
+          for port in 3001 3002 3003; do
+            for attempt in $(seq 1 30); do
+              if curl -sS "http://localhost:$port/health" > /dev/null; then
+                break
+              fi
+              sleep 2
+            done
+          done
+        working-directory: microservicios
+
+      - name: Probar Usuarios
+        run: docker compose exec -T usuarios npm test
+        working-directory: microservicios
+
+      - name: Probar Productos
+        run: docker compose exec -T productos npm test
+        working-directory: microservicios
+
+      - name: Probar Pedidos
+        run: docker compose exec -T pedidos npm test
+        working-directory: microservicios
+
+      - name: Mostrar logs si falla
+        if: failure()
+        run: docker compose logs
+        working-directory: microservicios
+
+      - name: Detener contenedores
+        if: always()
+        run: docker compose down -v
+        working-directory: microservicios
